@@ -9,38 +9,7 @@ const PDFDocument = require('pdfkit');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
-// ===============================
-// PROTEZIONE DEMO CON USER/PASSWORD
-// ===============================
-function demoBasicAuth(req, res, next) {
-  if (process.env.DEMO_AUTH_ENABLED !== "true") {
-    return next();
-  }
 
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Basic ")) {
-    res.setHeader("WWW-Authenticate", 'Basic realm="Quote Engine Demo"');
-    return res.status(401).send("Accesso richiesto");
-  }
-
-  const base64Credentials = authHeader.split(" ")[1];
-  const credentials = Buffer.from(base64Credentials, "base64").toString("utf8");
-
-  const [username, password] = credentials.split(":");
-
-  const demoUser = process.env.DEMO_USER || "demo";
-  const demoPassword = process.env.DEMO_PASSWORD || "Demo123";
-
-  if (username === demoUser && password === demoPassword) {
-    return next();
-  }
-
-  res.setHeader("WWW-Authenticate", 'Basic realm="Quote Engine Demo"');
-  return res.status(401).send("Credenziali non valide");
-}
-
-app.use(demoBasicAuth);
 
 const ROOT_DIR = path.join(__dirname, '..');
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
@@ -59,7 +28,204 @@ const COMPANY_EMAIL = process.env.COMPANY_EMAIL || process.env.GMAIL_USER || 'no
 const COMPANY_PHONE = process.env.COMPANY_PHONE || '';
 const COMPANY_ADDRESS = process.env.COMPANY_ADDRESS || '';
 const EMAIL_ENABLED = String(process.env.EMAIL_ENABLED || 'true').toLowerCase() !== 'false';
+// ===============================
+// ACCOUNT DEMO SEPARATI
+// Formato Render DEMO_ACCOUNTS:
+// admin:Password:superadmin,demo1:Password:client:2026-04-27
+// ===============================
 
+function makeAccountId(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'user';
+}
+
+function parseDemoAccounts() {
+  const raw = String(process.env.DEMO_ACCOUNTS || '').trim();
+
+  if (!raw) {
+    return [
+      {
+        id: makeAccountId(process.env.DEMO_USER || 'demo'),
+        username: process.env.DEMO_USER || 'demo',
+        password: process.env.DEMO_PASSWORD || 'Demo123',
+        role: 'superadmin',
+        expiresAt: '',
+        active: true,
+      },
+    ];
+  }
+
+  return raw
+    .split(',')
+    .map((entry) => {
+      const parts = entry.split(':').map((p) => p.trim());
+
+      const username = parts[0] || '';
+      const password = parts[1] || '';
+      const role = parts[2] || 'client';
+      const expiresAt = parts[3] || '';
+
+      return {
+        id: makeAccountId(username),
+        username,
+        password,
+        role,
+        expiresAt,
+        active: !!username && !!password,
+      };
+    })
+    .filter((account) => account.active);
+}
+
+function isAccountExpired(account) {
+  const raw = String(account?.expiresAt || '').trim();
+
+  if (!raw) return false;
+
+  const expireDate =
+    raw.length === 10
+      ? new Date(`${raw}T23:59:59`)
+      : new Date(raw);
+
+  if (Number.isNaN(expireDate.getTime())) return false;
+
+  return Date.now() > expireDate.getTime();
+}
+
+function findDemoAccount(username, password) {
+  const accounts = parseDemoAccounts();
+
+  return accounts.find((account) => {
+    return (
+      account.active &&
+      account.username === username &&
+      account.password === password
+    );
+  });
+}
+
+function publicUser(account) {
+  if (!account) return null;
+
+  return {
+    id: account.id,
+    username: account.username,
+    role: account.role || 'client',
+    expiresAt: account.expiresAt || '',
+  };
+}
+
+function getCurrentUser(req) {
+  if (req.currentUser) return req.currentUser;
+  if (req.session?.user) return req.session.user;
+
+  if (req.session?.isAdmin) {
+    return {
+      id: 'admin',
+      username: 'admin',
+      role: 'superadmin',
+      expiresAt: '',
+    };
+  }
+
+  return null;
+}
+
+function isSuperAdmin(req) {
+  const user = getCurrentUser(req);
+  return user?.role === 'superadmin';
+}
+
+function attachOwnerToRecord(req, record) {
+  const user = getCurrentUser(req);
+
+  if (!user || !record) return record;
+
+  record.ownerId = user.id;
+  record.ownerUsername = user.username;
+
+  return record;
+}
+
+function canAccessQuote(req, quote) {
+  const user = getCurrentUser(req);
+
+  if (!user || !quote) return false;
+  if (user.role === 'superadmin') return true;
+
+  return String(quote.ownerId || '') === String(user.id);
+}
+
+function filterQuotesForUser(req, quotes) {
+  const user = getCurrentUser(req);
+
+  if (!user) return [];
+  if (user.role === 'superadmin') return quotes;
+
+  return quotes.filter((quote) => {
+    return String(quote.ownerId || '') === String(user.id);
+  });
+}
+
+function canReadCatalogItem(req, item) {
+  const user = getCurrentUser(req);
+
+  if (!user || !item) return false;
+  if (user.role === 'superadmin') return true;
+
+  // I prodotti senza ownerId sono prodotti demo/base visibili a tutti
+  if (!item.ownerId) return true;
+
+  return String(item.ownerId) === String(user.id);
+}
+
+function canModifyCatalogItem(req, item) {
+  const user = getCurrentUser(req);
+
+  if (!user || !item) return false;
+  if (user.role === 'superadmin') return true;
+
+  return String(item.ownerId || '') === String(user.id);
+}
+
+function filterCatalogForUser(req, catalog) {
+  return catalog.filter((item) => canReadCatalogItem(req, item));
+}
+
+function demoBasicAuth(req, res, next) {
+  if (process.env.DEMO_AUTH_ENABLED !== 'true') {
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Quote Engine Demo"');
+    return res.status(401).send('Accesso richiesto');
+  }
+
+  const base64Credentials = authHeader.split(' ')[1];
+  const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8');
+
+  const [username, password] = credentials.split(':');
+
+  const account = findDemoAccount(username, password);
+
+  if (!account) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Quote Engine Demo"');
+    return res.status(401).send('Credenziali non valide');
+  }
+
+  if (isAccountExpired(account)) {
+    return res.status(403).send('Demo scaduta. Contatta Quote Engine per riattivare l’accesso.');
+  }
+
+  req.currentUser = publicUser(account);
+  return next();
+}
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
@@ -98,6 +264,8 @@ app.use((req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   next();
 });
+
+app.use(demoBasicAuth);
 
 app.use(express.static(PUBLIC_DIR));
 
@@ -200,6 +368,8 @@ function normalizeCatalogItem(item = {}) {
     description: String(item.description || item.descrizione || '').trim(),
     price: roundMoney(item.price ?? item.prezzo),
     sku: String(item.sku || item.codice || '').trim(),
+    ownerId: String(item.ownerId || '').trim(),
+    ownerUsername: String(item.ownerUsername || '').trim(),
     createdAt: item.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -302,9 +472,11 @@ function normalizeQuotePayload(payload = {}, quotes = []) {
     },
     items,
     notes: String(payload.notes || payload.note || '').trim(),
-    status: getStatusLabel(payload.status),
-    subtotal,
-    discount,
+   status: getStatusLabel(payload.status),
+ownerId: String(payload.ownerId || '').trim(),
+ownerUsername: String(payload.ownerUsername || '').trim(),
+subtotal,
+discount,
     taxRate,
     taxAmount,
     total,
@@ -333,9 +505,13 @@ async function saveQuotes(quotes) {
 }
 
 function requireAdmin(req, res, next) {
-  if (req.session && req.session.isAdmin) {
+  const user = getCurrentUser(req);
+
+  if (user) {
+    req.currentUser = user;
     return next();
   }
+
   return res.status(401).json({ error: 'Non autorizzato' });
 }
 
@@ -1235,11 +1411,21 @@ app.post('/api/admin/logout', (req, res) => {
 });
 
 app.get('/api/admin/me', (req, res) => {
-  return res.json({ isAdmin: !!req.session?.isAdmin });
+  const user = getCurrentUser(req);
+
+  return res.json({
+    isAdmin: !!user,
+    user,
+  });
 });
 
 app.get('/api/admin/check', (req, res) => {
-  return res.json({ isAdmin: !!req.session?.isAdmin });
+  const user = getCurrentUser(req);
+
+  return res.json({
+    isAdmin: !!user,
+    user,
+  });
 });
 
 /* PAGINE */
@@ -1303,8 +1489,8 @@ app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
 
 app.get('/api/catalog', async (_req, res) => {
   try {
-    const catalog = await getCatalog();
-    return res.json(catalog);
+   const catalog = await getCatalog();
+return res.json(filterCatalogForUser(req, catalog));
   } catch (error) {
     console.error('Errore lettura catalogo:', error);
     return res.status(500).json({ error: 'Errore lettura catalogo' });
@@ -1313,8 +1499,8 @@ app.get('/api/catalog', async (_req, res) => {
 
 app.get('/api/admin/catalog', requireAdmin, async (_req, res) => {
   try {
-    const catalog = await getCatalog();
-    return res.json(catalog);
+   const catalog = await getCatalog();
+return res.json(filterCatalogForUser(req, catalog));
   } catch (error) {
     console.error('Errore lettura catalogo admin:', error);
     return res.status(500).json({ error: 'Errore lettura catalogo' });
@@ -1338,6 +1524,7 @@ app.post('/api/admin/catalog', requireAdmin, async (req, res) => {
   try {
     const catalog = await getCatalog();
     const item = normalizeCatalogItem(req.body);
+    attachOwnerToRecord(req, item);
     catalog.unshift(item);
     await saveCatalog(catalog);
     return res.json({ ok: true, item });
@@ -1355,6 +1542,9 @@ async function updateCatalogItemHandler(req, res) {
     if (index === -1) {
       return res.status(404).json({ error: 'Prodotto non trovato' });
     }
+    if (!canModifyCatalogItem(req, catalog[index])) {
+  return res.status(403).json({ error: 'Non puoi modificare questo prodotto' });
+}
 
     const updated = normalizeCatalogItem({
       ...catalog[index],
@@ -1382,6 +1572,15 @@ app.patch('/api/admin/catalog/:id', requireAdmin, updateCatalogItemHandler);
 async function deleteCatalogItemHandler(req, res) {
   try {
     const catalog = await getCatalog();
+    const item = catalog.find((item) => item.id === req.params.id);
+
+if (!item) {
+  return res.status(404).json({ error: 'Prodotto non trovato' });
+}
+
+if (!canModifyCatalogItem(req, item)) {
+  return res.status(403).json({ error: 'Non puoi eliminare questo prodotto' });
+}
     const filtered = catalog.filter((item) => item.id !== req.params.id);
 
     if (filtered.length === catalog.length) {
@@ -1408,6 +1607,7 @@ app.get('/api/quotes', requireAdmin, async (req, res) => {
     const statusFilter = String(req.query.status || '').trim().toLowerCase();
 
     let filtered = [...quotes];
+    filtered = filterQuotesForUser(req, filtered);
 
     if (q) {
       filtered = filtered.filter((quote) => {
@@ -1448,6 +1648,7 @@ app.get('/api/admin/quotes', requireAdmin, async (req, res) => {
     const statusFilter = String(req.query.status || '').trim().toLowerCase();
 
     let filtered = [...quotes];
+    filtered = filterQuotesForUser(req, filtered);
 
     if (q) {
       filtered = filtered.filter((quote) => {
@@ -1517,7 +1718,7 @@ async function createQuoteHandler(req, res) {
   try {
     const quotes = await getQuotes();
     const quote = normalizeQuotePayload(req.body, quotes);
-
+attachOwnerToRecord(req, quote);
     const pdfInfo = await buildQuotePdf(quote);
     quote.pdfFile = pdfInfo.filename;
 
@@ -1542,17 +1743,21 @@ async function updateQuoteHandler(req, res) {
     if (index === -1) {
       return res.status(404).json({ error: 'Preventivo non trovato' });
     }
-
+if (!canAccessQuote(req, quotes[index])) {
+  return res.status(403).json({ error: 'Non puoi accedere a questo preventivo' });
+}
     const existing = quotes[index];
-    const mergedPayload = {
-      ...existing,
-      ...req.body,
-      id: existing.id,
-      number: existing.number,
-      createdAt: existing.createdAt,
-      updatedAt: new Date().toISOString(),
-      pdfFile: existing.pdfFile,
-    };
+   const mergedPayload = {
+  ...existing,
+  ...req.body,
+  id: existing.id,
+  number: existing.number,
+  ownerId: existing.ownerId,
+  ownerUsername: existing.ownerUsername,
+  createdAt: existing.createdAt,
+  updatedAt: new Date().toISOString(),
+  pdfFile: existing.pdfFile,
+};
 
     const updatedQuote = normalizeQuotePayload(mergedPayload, quotes);
     const pdfInfo = await buildQuotePdf(updatedQuote);
@@ -1581,7 +1786,9 @@ async function updateQuoteStatus(req, res) {
     if (index === -1) {
       return res.status(404).json({ error: 'Preventivo non trovato' });
     }
-
+if (!canAccessQuote(req, quotes[index])) {
+  return res.status(403).json({ error: 'Non puoi accedere a questo preventivo' });
+}
     const nextStatus = getStatusLabel(req.body?.status || req.body?.newStatus);
     quotes[index].status = nextStatus;
     quotes[index].updatedAt = new Date().toISOString();
@@ -1634,8 +1841,7 @@ async function deleteQuoteHandler(req, res) {
 
 app.delete('/api/quotes/:id', requireAdmin, deleteQuoteHandler);
 app.delete('/api/admin/quotes/:id', requireAdmin, deleteQuoteHandler);
-
-app.get('/api/quotes/:id/pdf', async (req, res) => {
+app.get('/api/quotes/:id/pdf', requireAdmin, async (req, res) => {
   try {
     const quotes = await getQuotes();
     const quote = quotes.find((item) => item.id === req.params.id);
@@ -1643,7 +1849,9 @@ app.get('/api/quotes/:id/pdf', async (req, res) => {
     if (!quote) {
       return res.status(404).send('Preventivo non trovato');
     }
-
+if (!canAccessQuote(req, quote)) {
+  return res.status(403).json({ error: 'Non puoi accedere a questo preventivo' });
+}
     let pdfPath = quote.pdfFile ? path.join(PDF_DIR, quote.pdfFile) : '';
 
     if (!pdfPath || !fs.existsSync(pdfPath)) {
@@ -1693,7 +1901,9 @@ async function handleSendQuoteEmail(req, res) {
     if (index === -1) {
       return res.status(404).json({ error: 'Preventivo non trovato' });
     }
-
+if (!canAccessQuote(req, quotes[index])) {
+  return res.status(403).json({ error: 'Non puoi accedere a questo preventivo' });
+}
     const info = await sendQuoteEmail(quotes[index]);
 
     quotes[index].status = 'Inviato';
