@@ -1487,7 +1487,7 @@ app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
 
 /* CATALOGO */
 
-app.get('/api/catalog', async (req, res) => {
+app.get('/api/catalog', requireAdmin, async (req, res) => {
   try {
     const catalog = await getCatalog();
     return res.json(filterCatalogForUser(req, catalog));
