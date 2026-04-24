@@ -1487,20 +1487,20 @@ app.post('/api/admin/test-email', requireAdmin, async (req, res) => {
 
 /* CATALOGO */
 
-app.get('/api/catalog', async (_req, res) => {
+app.get('/api/catalog', async (req, res) => {
   try {
-   const catalog = await getCatalog();
-return res.json(filterCatalogForUser(req, catalog));
+    const catalog = await getCatalog();
+    return res.json(filterCatalogForUser(req, catalog));
   } catch (error) {
     console.error('Errore lettura catalogo:', error);
     return res.status(500).json({ error: 'Errore lettura catalogo' });
   }
 });
 
-app.get('/api/admin/catalog', requireAdmin, async (_req, res) => {
+app.get('/api/admin/catalog', requireAdmin, async (req, res) => {
   try {
-   const catalog = await getCatalog();
-return res.json(filterCatalogForUser(req, catalog));
+    const catalog = await getCatalog();
+    return res.json(filterCatalogForUser(req, catalog));
   } catch (error) {
     console.error('Errore lettura catalogo admin:', error);
     return res.status(500).json({ error: 'Errore lettura catalogo' });
