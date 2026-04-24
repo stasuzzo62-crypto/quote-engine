@@ -9,6 +9,38 @@ const PDFDocument = require('pdfkit');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
+// ===============================
+// PROTEZIONE DEMO CON USER/PASSWORD
+// ===============================
+function demoBasicAuth(req, res, next) {
+  if (process.env.DEMO_AUTH_ENABLED !== "true") {
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Basic ")) {
+    res.setHeader("WWW-Authenticate", 'Basic realm="Quote Engine Demo"');
+    return res.status(401).send("Accesso richiesto");
+  }
+
+  const base64Credentials = authHeader.split(" ")[1];
+  const credentials = Buffer.from(base64Credentials, "base64").toString("utf8");
+
+  const [username, password] = credentials.split(":");
+
+  const demoUser = process.env.DEMO_USER || "demo";
+  const demoPassword = process.env.DEMO_PASSWORD || "Demo123";
+
+  if (username === demoUser && password === demoPassword) {
+    return next();
+  }
+
+  res.setHeader("WWW-Authenticate", 'Basic realm="Quote Engine Demo"');
+  return res.status(401).send("Credenziali non valide");
+}
+
+app.use(demoBasicAuth);
 
 const ROOT_DIR = path.join(__dirname, '..');
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
