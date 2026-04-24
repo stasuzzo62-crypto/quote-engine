@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <link rel="icon" href="/logo.png" type="image/png" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quote Engine Admin</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0a1220;
+      --panel: rgba(15, 24, 40, 0.97);
+      --panel-soft: rgba(255, 255, 255, 0.035);
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(124, 156, 255, 0.18);
+      --text: #eef4ff;
+      --text-soft: #9baac2;
+      --text-dim: #71829d;
+      --accent: #7c9cff;
+      --accent-2: #4fd1ff;
+      --success: #10b981;
+      --danger: #fb7185;
+      --warning: #f59e0b;
+      --info: #38bdf8;
+      --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.24);
+      --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.18);
+      --radius-2xl: 26px;
+      --radius-xl: 22px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(124, 156, 255, 0.10) 0%, rgba(124, 156, 255, 0) 24%),
+        radial-gradient(circle at 88% 0%, rgba(79, 209, 255, 0.08) 0%, rgba(79, 209, 255, 0) 20%),
+        linear-gradient(180deg, #08111c 0%, #09131f 45%, #0a1220 100%);
+      background-attachment: fixed;
+    }
+
+    .app-shell {
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: 18px 20px 28px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .glass,
+    .panel,
+    .stat-card,
+    .catalog-item,
+    .quote-card,
+    .editor-item,
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .message-area {
+      margin-bottom: 14px;
+    }
+
+    .message {
+      padding: 13px 15px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      line-height: 1.5;
+      box-shadow: var(--shadow-md);
+    }
+
+    .message.success {
+      color: #dbfff4;
+      background: rgba(16, 185, 129, 0.14);
+      border-color: rgba(16, 185, 129, 0.22);
+    }
+
+    .message.error {
+      color: #ffe6eb;
+      background: rgba(239, 68, 68, 0.14);
+      border-color: rgba(239, 68, 68, 0.22);
+    }
+
+    .message.info {
+      color: #eef4ff;
+      background: rgba(124, 156, 255, 0.14);
+      border-color: rgba(124, 156, 255, 0.22);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 16px 18px;
+      border-radius: var(--radius-2xl);
+    }
+    .brand-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.brand-logo {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  border-radius: 18px;
+  padding: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: var(--shadow-md);
+  flex-shrink: 0;
+}
+    .brand-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      color: var(--text-soft);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 700;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+      box-shadow: 0 0 10px rgba(79, 209, 255, 0.6);
+    }
+
+    .brand-wrap h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-wrap p {
+      margin: 0;
+      max-width: 780px;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+    }
+
+    .pill-primary {
+      background:
+        linear-gradient(135deg, rgba(124, 156, 255, 0.20), rgba(79, 209, 255, 0.12)),
+        rgba(255,255,255,0.04);
+      border-color: rgba(124, 156, 255, 0.18);
+    }
+
+    .pill-danger {
+      color: #ffe6eb;
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.18);
+    }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.stat-card {
+  position: relative;
+  min-height: 92px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(15,24,40,0.96) 100%),
+    rgba(15,24,40,0.96);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  background: var(--stat-line, rgba(124,156,255,.45));
+}
+
+.stat-card::after {
+  content: "";
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 68px;
+  height: 68px;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--stat-glow, rgba(124,156,255,.16)) 0%, rgba(0,0,0,0) 72%);
+  pointer-events: none;
+}
+
+.stat-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-label {
+  margin: 0 0 8px 0;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: rgba(235,243,255,0.70);
+  line-height: 1.2;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #eef4ff;
+}
+
+.stat-value.small-money {
+  font-size: 17px;
+  line-height: 1.1;
+}
+
+.stat-total {
+  --stat-line: rgba(124,156,255,.58);
+  --stat-glow: rgba(124,156,255,.18);
+}
+
+.stat-pending {
+  --stat-line: rgba(245,158,11,.68);
+  --stat-glow: rgba(245,158,11,.18);
+}
+
+.stat-sent {
+  --stat-line: rgba(56,189,248,.68);
+  --stat-glow: rgba(56,189,248,.18);
+}
+
+.stat-accepted {
+  --stat-line: rgba(16,185,129,.68);
+  --stat-glow: rgba(16,185,129,.18);
+}
+
+.stat-rejected {
+  --stat-line: rgba(244,63,94,.68);
+  --stat-glow: rgba(244,63,94,.18);
+}
+
+.stat-value-total {
+  --stat-line: rgba(99,102,241,.68);
+  --stat-glow: rgba(99,102,241,.18);
+}
+
+.stat-value-accepted {
+  --stat-line: rgba(34,197,94,.68);
+  --stat-glow: rgba(34,197,94,.18);
+}
+
+@media (max-width: 1400px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 380px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      border-radius: var(--radius-2xl);
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .panel-head {
+      padding: 20px 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: -0.03em;
+    }
+
+    .panel-subtitle {
+      margin: 8px 0 0 0;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .panel-body {
+      padding: 18px 20px 20px;
+      min-width: 0;
+    }
+
+    .form-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field-grid-2,
+    .field-grid-3,
+    .filter-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field-grid-2 { grid-template-columns: 1fr 1fr; }
+    .field-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .filter-grid {
+      grid-template-columns: minmax(0, 1fr) 220px 140px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-dim);
+    }
+
+    .field input,
+    .field select,
+    .field textarea,
+    .search-input,
+    .editor-input,
+    .editor-select,
+    .editor-textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 14px 15px;
+      font-size: 15px;
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      min-width: 0;
+    }
+
+    .field textarea,
+    .editor-textarea {
+      min-height: 105px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus,
+    .search-input:focus,
+    .editor-input:focus,
+    .editor-select:focus,
+    .editor-textarea:focus {
+      border-color: rgba(124, 156, 255, 0.32);
+      box-shadow: 0 0 0 4px rgba(124, 156, 255, 0.10);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .btn-row,
+    .quote-actions,
+    .quote-status-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+      font-weight: 800;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      transition: transform .08s ease, border-color .18s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,0.16);
+    }
+
+    .btn-primary {
+      color: #f7fbff;
+      border-color: rgba(124, 156, 255, 0.24);
+      background:
+        linear-gradient(135deg, rgba(124, 156, 255, 0.24), rgba(79, 209, 255, 0.12)),
+        rgba(255,255,255,0.05);
+    }
+
+    .btn-success {
+      color: #dbfff4;
+      border-color: rgba(16, 185, 129, 0.22);
+      background: rgba(16, 185, 129, 0.14);
+    }
+
+    .btn-danger {
+      color: #ffe6eb;
+      border-color: rgba(239, 68, 68, 0.22);
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .catalog-list,
+    .quote-list,
+    .editor-items {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .catalog-item {
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255,255,255,0.035);
+    }
+
+    .catalog-item h4 {
+      margin: 0 0 8px 0;
+      font-size: 19px;
+      letter-spacing: -0.03em;
+    }
+
+    .catalog-item p {
+      margin: 0 0 12px 0;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .catalog-price {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: -0.03em;
+    }
+
+    .quote-card {
+      border-radius: 20px;
+      padding: 16px;
+      background: rgba(255,255,255,0.035);
+      min-width: 0;
+    }
+
+    .quote-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .quote-top-left h4 {
+      margin: 0 0 8px 0;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+    }
+
+    .quote-meta {
+      display: grid;
+      gap: 5px;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .quote-top-right {
+      display: grid;
+      gap: 10px;
+      justify-items: end;
+      min-width: 210px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .10em;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .status-badge::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: currentColor;
+      opacity: .9;
+    }
+
+    .status-pending {
+      color: #f8c15b;
+      background: rgba(245, 158, 11, 0.11);
+      border-color: rgba(245, 158, 11, 0.18);
+    }
+
+    .status-sent {
+      color: #7dd3fc;
+      background: rgba(14, 165, 233, 0.12);
+      border-color: rgba(14, 165, 233, 0.18);
+    }
+
+    .status-accepted {
+      color: #49e3b5;
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.18);
+    }
+
+    .status-rejected {
+      color: #fb7185;
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.18);
+    }
+
+    .quote-total {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .quote-notes {
+      margin: 12px 0 0 0;
+      padding: 13px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .items-box {
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.06);
+      overflow: hidden;
+      background: rgba(255,255,255,0.025);
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .items-table th,
+    .items-table td {
+      padding: 12px 14px;
+      font-size: 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .items-table th {
+      color: var(--text-dim);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .items-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .items-table .right {
+      text-align: right;
+    }
+
+    .empty-state {
+      margin-top: 14px;
+      padding: 24px;
+      text-align: center;
+      border-radius: 18px;
+      border: 1px dashed rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-soft);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(3, 8, 16, 0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      width: min(1240px, 100%);
+      max-height: calc(100vh - 40px);
+      overflow: auto;
+      border-radius: 26px;
+      padding: 22px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .modal-head h3 {
+      margin: 0 0 8px 0;
+      font-size: 32px;
+      letter-spacing: -0.04em;
+    }
+
+    .modal-head p {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .editor-grid-2,
+    .editor-grid-3 {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .editor-grid-2 { grid-template-columns: 1fr 1fr; }
+    .editor-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .editor-item {
+      padding: 15px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .editor-summary {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(124,156,255,0.14);
+      background:
+        linear-gradient(135deg, rgba(124,156,255,0.10), rgba(79,209,255,0.06)),
+        rgba(255,255,255,0.03);
+      display: grid;
+      gap: 8px;
+    }
+
+    .editor-summary-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .editor-summary-total {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    @media (max-width: 1280px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stats-spacer {
+        display: none;
+      }
+    }
+
+    @media (max-width: 1160px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .quote-top-right {
+        justify-items: start;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .field-grid-2,
+      .field-grid-3,
+      .editor-grid-2,
+      .editor-grid-3,
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        flex-direction: column;
+      }
+
+      .brand-wrap h1 {
+        font-size: 34px;
+      }
+
+      .modal {
+        padding: 18px;
+      }
+
+      .modal-head h3 {
+        font-size: 28px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app-shell {
+        padding: 14px 12px 22px;
+      }
+
+      .topbar,
+      .panel-head,
+      .panel-body {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+    }
+    .field select,
+.search-input,
+.editor-select {
+  color: #eef4ff;
+}
+
+.field select option,
+.search-input option,
+.editor-select option {
+  color: #111827;
+  background: #ffffff;
+}
+
+.field select optgroup,
+.search-input optgroup,
+.editor-select optgroup {
+  color: #111827;
+  background: #ffffff;
+}
+.qe-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.qe-stat-card {
+  position: relative;
+  min-height: 92px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(15,24,40,0.96) 100%),
+    rgba(15,24,40,0.96);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.qe-stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  background: var(--qe-stat-line, rgba(124,156,255,.45));
+}
+
+.qe-stat-card::after {
+  content: "";
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 68px;
+  height: 68px;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--qe-stat-glow, rgba(124,156,255,.16)) 0%, rgba(0,0,0,0) 72%);
+  pointer-events: none;
+}
+
+.qe-stat-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.qe-stat-label {
+  margin: 0 0 8px 0;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: rgba(235,243,255,0.70);
+  line-height: 1.2;
+}
+
+.qe-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #eef4ff;
+}
+
+.qe-stat-value.small-money {
+  font-size: 17px;
+  line-height: 1.1;
+}
+
+.qe-stat-total {
+  --qe-stat-line: rgba(124,156,255,.68);
+  --qe-stat-glow: rgba(124,156,255,.18);
+}
+
+.qe-stat-pending {
+  --qe-stat-line: rgba(245,158,11,.72);
+  --qe-stat-glow: rgba(245,158,11,.18);
+}
+
+.qe-stat-sent {
+  --qe-stat-line: rgba(56,189,248,.72);
+  --qe-stat-glow: rgba(56,189,248,.18);
+}
+
+.qe-stat-accepted {
+  --qe-stat-line: rgba(16,185,129,.72);
+  --qe-stat-glow: rgba(16,185,129,.18);
+}
+
+.qe-stat-rejected {
+  --qe-stat-line: rgba(244,63,94,.72);
+  --qe-stat-glow: rgba(244,63,94,.18);
+}
+
+.qe-stat-value-total {
+  --qe-stat-line: rgba(99,102,241,.72);
+  --qe-stat-glow: rgba(99,102,241,.18);
+}
+
+.qe-stat-value-accepted {
+  --qe-stat-line: rgba(34,197,94,.72);
+  --qe-stat-glow: rgba(34,197,94,.18);
+}
+
+@media (max-width: 1400px) {
+  .qe-stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .qe-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .qe-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    (() => {
+      const state = {
+        products: [],
+        quotes: [],
+        editingProductId: null,
+        editingQuoteId: null,
+        editingQuoteItems: [],
+        filters: {
+          search: '',
+          status: ''
+        }
+      };
+
+      const app = document.getElementById('app');
+
+      document.addEventListener('DOMContentLoaded', init);
+
+      async function init() {
+        await checkAuth();
+      }
+
+      async function checkAuth() {
+        try {
+          const data = await apiRequest('/api/admin/check');
+          if (data && (data.isAdmin || data.authenticated)) {
+            renderAdmin();
+            await Promise.all([loadCatalog(), loadQuotes()]);
+          } else {
+            renderLogin();
+          }
+        } catch {
+          renderLogin();
+        }
+      }
+
+      function renderLogin() {
+        app.innerHTML = `
+          <div class="app-shell">
+            <div id="messageArea" class="message-area"></div>
+
+            <div class="topbar glass">
+             <div class="brand-area">
+  <img src="/logo.png" alt="Quote Engine Logo" class="brand-logo" />
+
+  <div class="brand-wrap">
+    <span class="eyebrow">Quote Engine • Dashboard amministrativa</span>
+    <h1>Quote Engine Admin</h1>
+    <p>Gestisci catalogo, preventivi, PDF ed email da un pannello più ordinato, compatto e professionale.</p>
+  </div>
+</div>
+            <div style="max-width: 560px; margin: 24px auto 0;">
+              <section class="panel">
+                <div class="panel-head">
+                  <div>
+                    <h2 class="panel-title">Login amministratore</h2>
+                    <p class="panel-subtitle">Inserisci la password admin per entrare nel gestionale.</p>
+                  </div>
+                </div>
+
+                <div class="panel-body">
+                  <form id="loginForm" class="form-stack">
+                    <div class="field">
+                      <label for="adminPassword">Password</label>
+                      <input id="adminPassword" type="password" placeholder="Inserisci la password" />
+                    </div>
+
+                    <button class="btn btn-primary" type="submit">Accedi al gestionale</button>
+                  </form>
+                </div>
+              </section>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+      }
+
+      function renderAdmin() {
+        app.innerHTML = `
+          <div class="app-shell">
+            <div id="messageArea" class="message-area"></div>
+
+            <div class="topbar glass">
+              <div class="brand-wrap">
+                <span class="eyebrow">Quote Engine • Dashboard amministrativa</span>
+                <h1>Quote Engine Admin</h1>
+                <p>Gestisci catalogo, preventivi, PDF ed email da un pannello più ordinato, compatto e professionale.</p>
+              </div>
+
+              <div class="topbar-actions">
+                <a class="pill pill-primary" href="/" target="_blank">Apri pagina pubblica</a>
+                <button id="logoutBtn" class="pill pill-danger" type="button">Esci</button>
+              </div>
+            </div>
+
+           <section class="qe-stats-grid">
+  <div class="qe-stat-card qe-stat-sent">
+    <div class="qe-stat-label">Inviati</div>
+    <div id="statSent" class="qe-stat-value">0</div>
+  </div>
+
+  <div class="qe-stat-card qe-stat-pending">
+    <div class="qe-stat-label">In attesa</div>
+    <div id="statPending" class="qe-stat-value">0</div>
+  </div>
+
+  <div class="qe-stat-card qe-stat-accepted">
+    <div class="qe-stat-label">Accettati</div>
+    <div id="statAccepted" class="qe-stat-value">0</div>
+  </div>
+
+  <div class="qe-stat-card qe-stat-rejected">
+    <div class="qe-stat-label">Rifiutati</div>
+    <div id="statRejected" class="qe-stat-value">0</div>
+  </div>
+
+  <div class="qe-stat-card qe-stat-total">
+    <div class="qe-stat-label">Preventivi totali</div>
+    <div id="statTotalQuotes" class="qe-stat-value">0</div>
+  </div>
+
+  <div class="qe-stat-card qe-stat-value-total">
+    <div class="qe-stat-label">Valore totale</div>
+    <div id="statTotalValue" class="qe-stat-value small-money">€ 0,00</div>
+  </div>
+
+  <div class="qe-stat-card qe-stat-value-accepted">
+    <div class="qe-stat-label">Valore accettati</div>
+    <div id="statAcceptedValue" class="qe-stat-value small-money">€ 0,00</div>
+  </div>
+</section>
+            <div class="workspace">
+              <aside class="panel glass">
+                <div class="panel-head">
+                  <div>
+                    <h2 class="panel-title">Catalogo prodotti</h2>
+                    <p class="panel-subtitle">Aggiungi, modifica ed elimina prodotti dal listino.</p>
+                  </div>
+                </div>
+
+                <div class="panel-body">
+                  <form id="productForm" class="form-stack">
+                    <input type="hidden" id="productId" />
+
+                    <div class="field">
+                      <label for="productName">Nome prodotto</label>
+                      <input id="productName" type="text" placeholder="Es. Pacchetto sito premium" />
+                    </div>
+
+                    <div class="field">
+                      <label for="productDescription">Descrizione</label>
+                      <textarea id="productDescription" placeholder="Descrizione prodotto o servizio"></textarea>
+                    </div>
+
+                    <div class="field">
+                      <label for="productPrice">Prezzo</label>
+                      <input id="productPrice" type="number" step="0.01" min="0" placeholder="0.00" />
+                    </div>
+
+                    <div class="btn-row">
+                      <button id="saveProductBtn" class="btn btn-primary" type="submit">Salva prodotto</button>
+                      <button id="cancelProductEditBtn" class="btn btn-secondary hidden" type="button">Annulla modifica</button>
+                    </div>
+                  </form>
+
+                  <div id="catalogList" class="catalog-list"></div>
+                </div>
+              </aside>
+
+              <main class="panel glass">
+                <div class="panel-head">
+                  <div>
+                    <h2 class="panel-title">Archivio preventivi</h2>
+                    <p class="panel-subtitle">Cerca, filtra e gestisci rapidamente tutte le pratiche.</p>
+                  </div>
+                </div>
+
+                <div class="panel-body">
+                  <div class="filter-grid">
+                    <input id="quoteSearch" class="search-input" type="text" placeholder="Cerca per numero, cliente, azienda, email..." />
+
+                    <select id="quoteStatusFilter" class="search-input">
+                      <option value="">Tutti gli stati</option>
+                      <option value="pending">In attesa</option>
+                      <option value="sent">Inviato</option>
+                      <option value="accepted">Accettato</option>
+                      <option value="rejected">Rifiutato</option>
+                    </select>
+
+                    <button id="refreshQuotesBtn" class="btn btn-secondary" type="button">Aggiorna</button>
+                  </div>
+
+                  <div id="quotesList" class="quote-list"></div>
+                </div>
+              </main>
+            </div>
+
+            <div id="quoteEditorOverlay" class="modal-overlay">
+              <div class="modal">
+                <div class="modal-head">
+                  <div>
+                    <h3>Modifica preventivo</h3>
+                    <p id="editingQuoteLabel">Nessun preventivo selezionato</p>
+                  </div>
+
+                  <div class="btn-row">
+                    <button id="closeQuoteEditorTop" class="btn btn-secondary" type="button">Chiudi</button>
+                  </div>
+                </div>
+
+                <form id="quoteEditForm">
+                  <div class="editor-grid-2">
+                    <div class="field">
+                      <label for="editQuoteFirstName">Nome</label>
+                      <input id="editQuoteFirstName" class="editor-input" type="text" />
+                    </div>
+
+                    <div class="field">
+                      <label for="editQuoteLastName">Cognome</label>
+                      <input id="editQuoteLastName" class="editor-input" type="text" />
+                    </div>
+                  </div>
+
+                  <div class="editor-grid-3">
+                    <div class="field">
+                      <label for="editQuoteCompany">Azienda</label>
+                      <input id="editQuoteCompany" class="editor-input" type="text" />
+                    </div>
+
+                    <div class="field">
+                      <label for="editQuoteEmail">Email</label>
+                      <input id="editQuoteEmail" class="editor-input" type="email" />
+                    </div>
+
+                    <div class="field">
+                      <label for="editQuotePhone">Telefono</label>
+                      <input id="editQuotePhone" class="editor-input" type="text" />
+                    </div>
+                  </div>
+
+                  <div class="editor-grid-3">
+                    <div class="field">
+                      <label for="editQuoteStatus">Stato</label>
+                      <select id="editQuoteStatus" class="editor-select">
+                        <option value="pending">In attesa</option>
+                        <option value="sent">Inviato</option>
+                        <option value="accepted">Accettato</option>
+                        <option value="rejected">Rifiutato</option>
+                      </select>
+                    </div>
+
+                    <div class="field">
+                      <label for="editQuoteDiscount">Sconto €</label>
+                      <input id="editQuoteDiscount" class="editor-input" type="number" step="0.01" min="0" />
+                    </div>
+
+                    <div class="field">
+                      <label for="editQuoteTaxRate">IVA %</label>
+                      <input id="editQuoteTaxRate" class="editor-input" type="number" step="0.01" min="0" />
+                    </div>
+                  </div>
+
+                  <div class="field">
+                    <label for="editQuoteNotes">Note</label>
+                    <textarea id="editQuoteNotes" class="editor-textarea" placeholder="Note del preventivo"></textarea>
+                  </div>
+
+                  <div class="panel" style="border-radius: 22px; margin-top: 18px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);">
+                    <div class="panel-head">
+                      <div>
+                        <h2 class="panel-title" style="font-size: 22px;">Righe preventivo</h2>
+                        <p class="panel-subtitle">Aggiungi prodotti, modifica quantità e prezzi.</p>
+                      </div>
+
+                      <div class="btn-row">
+                        <button id="addQuoteRowBtn" class="btn btn-primary" type="button">Aggiungi riga</button>
+                      </div>
+                    </div>
+
+                    <div class="panel-body">
+                      <div id="quoteEditItems" class="editor-items"></div>
+                    </div>
+                  </div>
+
+                  <div class="editor-summary">
+                    <div class="editor-summary-line">
+                      <span>Subtotale</span>
+                      <strong id="editQuoteSubtotal">€ 0,00</strong>
+                    </div>
+
+                    <div class="editor-summary-line">
+                      <span>Sconto</span>
+                      <strong id="editQuoteDiscountValue">€ 0,00</strong>
+                    </div>
+
+                    <div class="editor-summary-line">
+                      <span>Imponibile</span>
+                      <strong id="editQuoteTaxable">€ 0,00</strong>
+                    </div>
+
+                    <div class="editor-summary-line">
+                      <span>IVA</span>
+                      <strong id="editQuoteTaxAmount">€ 0,00</strong>
+                    </div>
+
+                    <div class="editor-summary-total">
+                      <span>Totale finale</span>
+                      <span id="editQuoteTotal">€ 0,00</span>
+                    </div>
+                  </div>
+
+                  <div class="btn-row" style="margin-top: 18px;">
+                    <button class="btn btn-success" type="submit">Salva preventivo</button>
+                    <button id="closeQuoteEditorBottom" class="btn btn-secondary" type="button">Annulla</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        `;
+
+        bindAdminEvents();
+      }
+
+      function bindAdminEvents() {
+        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+        document.getElementById('productForm').addEventListener('submit', handleSaveProduct);
+        document.getElementById('cancelProductEditBtn').addEventListener('click', resetProductForm);
+        document.getElementById('quoteSearch').addEventListener('input', handleFilterChange);
+        document.getElementById('quoteStatusFilter').addEventListener('change', handleFilterChange);
+        document.getElementById('refreshQuotesBtn').addEventListener('click', loadQuotes);
+        document.getElementById('quoteEditForm').addEventListener('submit', handleSaveQuoteEdit);
+        document.getElementById('addQuoteRowBtn').addEventListener('click', addQuoteEditRow);
+        document.getElementById('closeQuoteEditorTop').addEventListener('click', closeQuoteEditor);
+        document.getElementById('closeQuoteEditorBottom').addEventListener('click', closeQuoteEditor);
+        document.getElementById('quoteEditorOverlay').addEventListener('click', (e) => {
+          if (e.target.id === 'quoteEditorOverlay') {
+            closeQuoteEditor();
+          }
+        });
+        document.getElementById('editQuoteDiscount').addEventListener('input', updateQuoteEditorSummary);
+        document.getElementById('editQuoteTaxRate').addEventListener('input', updateQuoteEditorSummary);
+      }
+
+      async function handleLogin(e) {
+        e.preventDefault();
+
+        const password = String(document.getElementById('adminPassword').value || '').trim();
+        if (!password) {
+          showMessage('Inserisci la password admin.', 'error');
+          return;
+        }
+
+        try {
+          const data = await apiRequest('/api/admin/login', {
+            method: 'POST',
+            body: { password }
+          });
+
+          if (data && (data.ok !== false)) {
+            renderAdmin();
+            await Promise.all([loadCatalog(), loadQuotes()]);
+            showMessage('Accesso effettuato correttamente.', 'success');
+          } else {
+            showMessage('Password non valida.', 'error');
+          }
+        } catch (error) {
+          showMessage(error.message || 'Errore durante il login.', 'error');
+        }
+      }
+
+      async function handleLogout() {
+        try {
+          await apiRequest('/api/admin/logout', { method: 'POST' });
+        } catch {}
+
+        state.products = [];
+        state.quotes = [];
+        state.editingProductId = null;
+        state.editingQuoteId = null;
+        state.editingQuoteItems = [];
+        renderLogin();
+        showMessage('Logout effettuato.', 'success');
+      }
+
+      function handleFilterChange() {
+        state.filters.search = String(document.getElementById('quoteSearch').value || '').trim();
+        state.filters.status = String(document.getElementById('quoteStatusFilter').value || '').trim();
+        renderQuotes();
+      }
+
+      async function loadCatalog() {
+        try {
+          const data = await requestWithFallback([
+            { url: '/api/admin/catalog', method: 'GET' },
+            { url: '/api/catalog', method: 'GET' }
+          ]);
+
+          state.products = Array.isArray(data)
+            ? data
+            : (Array.isArray(data?.products) ? data.products : []);
+
+          renderCatalog();
+        } catch (error) {
+          if (error.status === 401) {
+            renderLogin();
+            return;
+          }
+
+          state.products = [];
+          renderCatalog();
+          showMessage(error.message || 'Errore caricamento catalogo.', 'error');
+        }
+      }
+
+      function renderCatalog() {
+        const container = document.getElementById('catalogList');
+        if (!container) return;
+
+        if (!state.products.length) {
+          container.innerHTML = '<div class="empty-state">Nessun prodotto presente nel catalogo.</div>';
+          return;
+        }
+
+        container.innerHTML = state.products.map((product) => `
+          <div class="catalog-item">
+            <h4>${escapeHtml(product.name || '')}</h4>
+            <p>${escapeHtml(product.description || 'Nessuna descrizione')}</p>
+            <div class="catalog-price">${formatCurrency(product.price || 0)}</div>
+
+            <div class="btn-row">
+              <button class="btn btn-secondary" type="button" data-edit-product="${escapeAttr(product.id)}">Modifica</button>
+              <button class="btn btn-danger" type="button" data-delete-product="${escapeAttr(product.id)}">Elimina</button>
+            </div>
+          </div>
+        `).join('');
+
+        container.querySelectorAll('[data-edit-product]').forEach((btn) => {
+          btn.addEventListener('click', () => startEditProduct(btn.getAttribute('data-edit-product')));
+        });
+
+        container.querySelectorAll('[data-delete-product]').forEach((btn) => {
+          btn.addEventListener('click', () => deleteProduct(btn.getAttribute('data-delete-product')));
+        });
+      }
+
+      async function handleSaveProduct(e) {
+        e.preventDefault();
+
+        const id = String(document.getElementById('productId').value || '').trim();
+        const name = String(document.getElementById('productName').value || '').trim();
+        const description = String(document.getElementById('productDescription').value || '').trim();
+        const price = Number(document.getElementById('productPrice').value || 0);
+
+        if (!name) {
+          showMessage('Inserisci il nome del prodotto.', 'error');
+          return;
+        }
+
+        if (!Number.isFinite(price) || price < 0) {
+          showMessage('Inserisci un prezzo valido.', 'error');
+          return;
+        }
+
+        try {
+          if (id) {
+            await requestWithFallback([
+              {
+                url: '/api/admin/catalog/' + encodeURIComponent(id),
+                method: 'PUT',
+                body: { name, description, price }
+              },
+              {
+                url: '/api/catalog/' + encodeURIComponent(id),
+                method: 'PUT',
+                body: { name, description, price }
+              }
+            ]);
+
+            showMessage('Prodotto aggiornato correttamente.', 'success');
+          } else {
+            await requestWithFallback([
+              {
+                url: '/api/admin/catalog',
+                method: 'POST',
+                body: { name, description, price }
+              },
+              {
+                url: '/api/catalog',
+                method: 'POST',
+                body: { name, description, price }
+              }
+            ]);
+
+            showMessage('Prodotto creato correttamente.', 'success');
+          }
+
+          resetProductForm();
+          await loadCatalog();
+        } catch (error) {
+          if (error.status === 401) {
+            renderLogin();
+            return;
+          }
+
+          showMessage(error.message || 'Errore salvataggio prodotto.', 'error');
+        }
+      }
+
+      function startEditProduct(id) {
+        const product = state.products.find((item) => String(item.id) === String(id));
+        if (!product) return;
+
+        state.editingProductId = id;
+        document.getElementById('productId').value = product.id || '';
+        document.getElementById('productName').value = product.name || '';
+        document.getElementById('productDescription').value = product.description || '';
+        document.getElementById('productPrice').value = Number(product.price || 0);
+        document.getElementById('cancelProductEditBtn').classList.remove('hidden');
+        document.getElementById('saveProductBtn').textContent = 'Aggiorna prodotto';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function resetProductForm() {
+        state.editingProductId = null;
+        document.getElementById('productId').value = '';
+        document.getElementById('productName').value = '';
+        document.getElementById('productDescription').value = '';
+        document.getElementById('productPrice').value = '';
+        document.getElementById('cancelProductEditBtn').classList.add('hidden');
+        document.getElementById('saveProductBtn').textContent = 'Salva prodotto';
+      }
+
+      async function deleteProduct(id) {
+        if (!window.confirm('Vuoi eliminare questo prodotto?')) return;
+
+        try {
+          await requestWithFallback([
+            { url: '/api/admin/catalog/' + encodeURIComponent(id), method: 'DELETE' },
+            { url: '/api/catalog/' + encodeURIComponent(id), method: 'DELETE' }
+          ]);
+
+          showMessage('Prodotto eliminato.', 'success');
+          resetProductForm();
+          await loadCatalog();
+        } catch (error) {
+          if (error.status === 401) {
+            renderLogin();
+            return;
+          }
+
+          showMessage(error.message || 'Errore eliminazione prodotto.', 'error');
+        }
+      }
+
+      async function loadQuotes() {
+        try {
+          const data = await requestWithFallback([
+            { url: '/api/admin/quotes', method: 'GET' },
+            { url: '/api/quotes', method: 'GET' }
+          ]);
+
+          state.quotes = Array.isArray(data)
+            ? data
+            : (Array.isArray(data?.quotes) ? data.quotes : []);
+
+          renderStats();
+          renderQuotes();
+        } catch (error) {
+          if (error.status === 401) {
+            renderLogin();
+            return;
+          }
+
+          state.quotes = [];
+          renderStats();
+          renderQuotes();
+          showMessage(error.message || 'Errore caricamento preventivi.', 'error');
+        }
+      }
+
+      function renderStats() {
+        const stats = calculateStats();
+        setText('statTotalQuotes', String(stats.totalQuotes));
+        setText('statPending', String(stats.pending));
+        setText('statSent', String(stats.sent));
+        setText('statAccepted', String(stats.accepted));
+        setText('statRejected', String(stats.rejected));
+        setText('statTotalValue', formatCurrency(stats.totalValue));
+        setText('statAcceptedValue', formatCurrency(stats.acceptedValue));
+      }
+
+      function calculateStats() {
+        let pending = 0;
+        let sent = 0;
+        let accepted = 0;
+        let rejected = 0;
+        let totalValue = 0;
+        let acceptedValue = 0;
+
+        for (const quote of state.quotes) {
+          const status = normalizeStatus(quote.status);
+          const total = getQuoteTotal(quote);
+          totalValue += total;
+
+          if (status === 'pending') pending += 1;
+          if (status === 'sent') sent += 1;
+          if (status === 'accepted') {
+            accepted += 1;
+            acceptedValue += total;
+          }
+          if (status === 'rejected') rejected += 1;
+        }
+
+        return {
+          totalQuotes: state.quotes.length,
+          pending,
+          sent,
+          accepted,
+          rejected,
+          totalValue,
+          acceptedValue
+        };
+      }
+
+      function renderQuotes() {
+        const container = document.getElementById('quotesList');
+        if (!container) return;
+
+        const filteredQuotes = getFilteredQuotes();
+
+        if (!filteredQuotes.length) {
+          container.innerHTML = '<div class="empty-state">Nessun preventivo trovato con i filtri attuali.</div>';
+          return;
+        }
+
+        container.innerHTML = filteredQuotes.map((quote) => {
+          const customer = getCustomerData(quote);
+          const status = normalizeStatus(quote.status);
+          const total = getQuoteTotal(quote);
+          const items = Array.isArray(quote.items) ? quote.items : [];
+
+          const rowsHtml = items.length
+            ? items.map((item) => `
+                <tr>
+                  <td>${escapeHtml(item.name || 'Voce')}</td>
+                  <td class="right">${escapeHtml(String(getItemQuantity(item)))}</td>
+                  <td class="right">${formatCurrency(getItemUnitPrice(item))}</td>
+                  <td class="right">${formatCurrency(getItemTotal(item))}</td>
+                </tr>
+              `).join('')
+            : '<tr><td colspan="4" style="color: var(--text-soft);">Nessuna riga presente.</td></tr>';
+
+          return `
+            <div class="quote-card">
+              <div class="quote-top">
+                <div class="quote-top-left">
+                  <h4>${escapeHtml(quote.number || 'Preventivo')}</h4>
+                  <div class="quote-meta">
+                    <div><strong>Cliente:</strong> ${escapeHtml(customer.fullName || '-')}</div>
+                    <div><strong>Azienda:</strong> ${escapeHtml(customer.company || '-')}</div>
+                    <div><strong>Email:</strong> ${escapeHtml(customer.email || '-')}</div>
+                    <div><strong>Telefono:</strong> ${escapeHtml(customer.phone || '-')}</div>
+                    <div><strong>Data:</strong> ${escapeHtml(formatDateTime(quote.createdAt))}</div>
+                  </div>
+                </div>
+
+                <div class="quote-top-right">
+                  <span class="status-badge status-${status}">${escapeHtml(getStatusLabel(status))}</span>
+                  <div class="quote-total">${formatCurrency(total)}</div>
+
+                  <div class="quote-status-row">
+                    <select class="search-input" data-quote-status="${escapeAttr(quote.id)}" style="min-width: 170px;">
+                      ${buildStatusOptions(status)}
+                    </select>
+                    <button class="btn btn-secondary" type="button" data-save-status="${escapeAttr(quote.id)}">Aggiorna</button>
+                  </div>
+                </div>
+              </div>
+
+              ${quote.notes ? `<div class="quote-notes"><strong>Note:</strong> ${escapeHtml(quote.notes)}</div>` : ''}
+
+              <div class="items-box">
+                <table class="items-table">
+                  <thead>
+                    <tr>
+                      <th>Prodotto</th>
+                      <th class="right">Q.tà</th>
+                      <th class="right">Prezzo unit.</th>
+                      <th class="right">Totale riga</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rowsHtml}
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="quote-actions" style="margin-top:14px;">
+                <button class="btn btn-primary" type="button" data-edit-quote="${escapeAttr(quote.id)}">Modifica</button>
+                <a class="btn btn-secondary" href="/api/admin/quotes/${encodeURIComponent(quote.id)}/pdf" target="_blank">Apri PDF</a>
+                <button class="btn btn-success" type="button" data-send-email="${escapeAttr(quote.id)}">Invia email</button>
+                <button class="btn btn-danger" type="button" data-delete-quote="${escapeAttr(quote.id)}">Elimina</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        container.querySelectorAll('[data-save-status]').forEach((btn) => {
+          btn.addEventListener('click', () => updateQuoteStatus(btn.getAttribute('data-save-status')));
+        });
+
+        container.querySelectorAll('[data-send-email]').forEach((btn) => {
+          btn.addEventListener('click', () => sendQuoteEmail(btn.getAttribute('data-send-email')));
+        });
+
+        container.querySelectorAll('[data-delete-quote]').forEach((btn) => {
+          btn.addEventListener('click', () => deleteQuote(btn.getAttribute('data-delete-quote')));
+        });
+
+        container.querySelectorAll('[data-edit-quote]').forEach((btn) => {
+          btn.addEventListener('click', () => startEditQuote(btn.getAttribute('data-edit-quote')));
+        });
+      }
+
+      function getFilteredQuotes() {
+        const search = normalizeText(state.filters.search || '');
+        const statusFilter = normalizeStatusForFilter(state.filters.status || '');
+
+        return [...state.quotes]
+          .filter((quote) => {
+            const customer = getCustomerData(quote);
+            const quoteStatus = normalizeStatus(quote.status);
+
+            const haystack = [
+              quote.id,
+              quote.number,
+              customer.fullName,
+              customer.firstName,
+              customer.lastName,
+              customer.company,
+              customer.email,
+              customer.phone,
+              ...(Array.isArray(quote.items) ? quote.items.map((item) => item.name || '') : [])
+            ].filter(Boolean).join(' ');
+
+            const matchesSearch = !search || normalizeText(haystack).includes(search);
+            const matchesStatus = !statusFilter || quoteStatus === statusFilter;
+
+            return matchesSearch && matchesStatus;
+          })
+          .sort((a, b) => {
+            const aDate = new Date(a.createdAt || 0).getTime();
+            const bDate = new Date(b.createdAt || 0).getTime();
+            return bDate - aDate;
+          });
+      }
+
+      function startEditQuote(id) {
+        const quote = state.quotes.find((q) => String(q.id) === String(id));
+        if (!quote) {
+          showMessage('Preventivo non trovato.', 'error');
+          return;
+        }
+
+        state.editingQuoteId = quote.id;
+        state.editingQuoteItems = Array.isArray(quote.items)
+          ? quote.items.map((item) => ({
+              id: item.id || '',
+              name: item.name || '',
+              description: item.description || '',
+              quantity: getItemQuantity(item),
+              unitPrice: getItemUnitPrice(item)
+            }))
+          : [];
+
+        if (!state.editingQuoteItems.length) {
+          state.editingQuoteItems.push({
+            id: '',
+            name: '',
+            description: '',
+            quantity: 1,
+            unitPrice: 0
+          });
+        }
+
+        const customer = getCustomerData(quote);
+
+        document.getElementById('editQuoteFirstName').value = customer.firstName || '';
+        document.getElementById('editQuoteLastName').value = customer.lastName || '';
+        document.getElementById('editQuoteCompany').value = customer.company || '';
+        document.getElementById('editQuoteEmail').value = customer.email || '';
+        document.getElementById('editQuotePhone').value = customer.phone || '';
+        document.getElementById('editQuoteNotes').value = quote.notes || '';
+        document.getElementById('editQuoteStatus').value = normalizeStatus(quote.status);
+        document.getElementById('editQuoteDiscount').value = Number(quote.discount || 0);
+        document.getElementById('editQuoteTaxRate').value = Number(quote.taxRate || 22);
+        document.getElementById('editingQuoteLabel').textContent = `${quote.number || 'Preventivo'} • ${customer.fullName || 'Cliente'}`;
+
+        renderQuoteEditItems();
+        updateQuoteEditorSummary();
+        document.getElementById('quoteEditorOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeQuoteEditor() {
+        state.editingQuoteId = null;
+        state.editingQuoteItems = [];
+        document.getElementById('quoteEditorOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      function addQuoteEditRow() {
+        state.editingQuoteItems.push({
+          id: '',
+          name: '',
+          description: '',
+          quantity: 1,
+          unitPrice: 0
+        });
+        renderQuoteEditItems();
+      }
+
+      function removeQuoteEditRow(index) {
+        state.editingQuoteItems.splice(index, 1);
+
+        if (!state.editingQuoteItems.length) {
+          state.editingQuoteItems.push({
+            id: '',
+            name: '',
+            description: '',
+            quantity: 1,
+            unitPrice: 0
+          });
+        }
+
+        renderQuoteEditItems();
+      }
+
+      function renderQuoteEditItems() {
+        const container = document.getElementById('quoteEditItems');
+        if (!container) return;
+
+        container.innerHTML = state.editingQuoteItems.map((item, index) => `
+          <div class="editor-item">
+            <div class="editor-grid-2">
+              <div class="field">
+                <label>Prodotto da catalogo</label>
+                <select class="editor-select" data-edit-row-product="${index}">
+                  <option value="">Seleziona prodotto</option>
+                  ${state.products.map((product) => `
+                    <option value="${escapeAttr(product.id)}">
+                      ${escapeHtml(product.name || '')} - ${formatCurrency(product.price || 0)}
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Nome riga</label>
+                <input class="editor-input" type="text" data-edit-row-name="${index}" value="${escapeAttr(item.name || '')}" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Descrizione</label>
+              <textarea class="editor-textarea" data-edit-row-description="${index}">${escapeHtml(item.description || '')}</textarea>
+            </div>
+
+            <div class="editor-grid-3">
+              <div class="field">
+                <label>Quantità</label>
+                <input class="editor-input" type="number" min="1" step="1" data-edit-row-qty="${index}" value="${escapeAttr(item.quantity)}" />
+              </div>
+
+              <div class="field">
+                <label>Prezzo unitario</label>
+                <input class="editor-input" type="number" min="0" step="0.01" data-edit-row-price="${index}" value="${escapeAttr(item.unitPrice)}" />
+              </div>
+
+              <div class="field">
+                <label>Totale riga</label>
+                <input class="editor-input" type="text" value="${escapeAttr(formatCurrency(Number(item.quantity || 1) * Number(item.unitPrice || 0)))}" disabled />
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn btn-danger" type="button" data-remove-edit-row="${index}">Rimuovi riga</button>
+            </div>
+          </div>
+        `).join('');
+
+        container.querySelectorAll('[data-edit-row-product]').forEach((el) => {
+          el.addEventListener('change', () => {
+            const index = Number(el.getAttribute('data-edit-row-product'));
+            const productId = String(el.value || '');
+            const product = state.products.find((p) => String(p.id) === productId);
+            if (!product) return;
+
+            state.editingQuoteItems[index].name = product.name || '';
+            state.editingQuoteItems[index].description = product.description || '';
+            state.editingQuoteItems[index].unitPrice = Number(product.price || 0);
+            renderQuoteEditItems();
+          });
+        });
+
+        container.querySelectorAll('[data-edit-row-name]').forEach((el) => {
+          el.addEventListener('input', () => {
+            const index = Number(el.getAttribute('data-edit-row-name'));
+            state.editingQuoteItems[index].name = el.value;
+            updateQuoteEditorSummary();
+          });
+        });
+
+        container.querySelectorAll('[data-edit-row-description]').forEach((el) => {
+          el.addEventListener('input', () => {
+            const index = Number(el.getAttribute('data-edit-row-description'));
+            state.editingQuoteItems[index].description = el.value;
+          });
+        });
+
+        container.querySelectorAll('[data-edit-row-qty]').forEach((el) => {
+          el.addEventListener('input', () => {
+            const index = Number(el.getAttribute('data-edit-row-qty'));
+            state.editingQuoteItems[index].quantity = Math.max(1, Number(el.value || 1));
+            renderQuoteEditItems();
+          });
+        });
+
+        container.querySelectorAll('[data-edit-row-price]').forEach((el) => {
+          el.addEventListener('input', () => {
+            const index = Number(el.getAttribute('data-edit-row-price'));
+            state.editingQuoteItems[index].unitPrice = Math.max(0, Number(el.value || 0));
+            renderQuoteEditItems();
+          });
+        });
+
+        container.querySelectorAll('[data-remove-edit-row]').forEach((el) => {
+          el.addEventListener('click', () => {
+            removeQuoteEditRow(Number(el.getAttribute('data-remove-edit-row')));
+          });
+        });
+
+        updateQuoteEditorSummary();
+      }
+
+      function updateQuoteEditorSummary() {
+        const subtotal = state.editingQuoteItems.reduce((sum, item) => {
+          const quantity = Math.max(1, Number(item.quantity || 1));
+          const unitPrice = Math.max(0, Number(item.unitPrice || 0));
+          return sum + quantity * unitPrice;
+        }, 0);
+
+        const discount = Math.max(0, Number(document.getElementById('editQuoteDiscount')?.value || 0));
+        const taxRate = Math.max(0, Number(document.getElementById('editQuoteTaxRate')?.value || 0));
+        const taxable = Math.max(0, subtotal - discount);
+        const taxAmount = taxable * (taxRate / 100);
+        const total = taxable + taxAmount;
+
+        setText('editQuoteSubtotal', formatCurrency(subtotal));
+        setText('editQuoteDiscountValue', formatCurrency(discount));
+        setText('editQuoteTaxable', formatCurrency(taxable));
+        setText('editQuoteTaxAmount', formatCurrency(taxAmount));
+        setText('editQuoteTotal', formatCurrency(total));
+      }
+
+      async function handleSaveQuoteEdit(e) {
+        e.preventDefault();
+
+        if (!state.editingQuoteId) {
+          showMessage('Nessun preventivo selezionato.', 'error');
+          return;
+        }
+
+        const items = state.editingQuoteItems
+          .map((item) => {
+            const quantity = Math.max(1, Number(item.quantity || 1));
+            const unitPrice = Math.max(0, Number(item.unitPrice || 0));
+
+            return {
+              id: item.id || undefined,
+              name: String(item.name || '').trim(),
+              description: String(item.description || '').trim(),
+              quantity,
+              unitPrice,
+              total: quantity * unitPrice
+            };
+          })
+          .filter((item) => item.name);
+
+        if (!items.length) {
+          showMessage('Inserisci almeno una riga valida nel preventivo.', 'error');
+          return;
+        }
+
+        const payload = {
+          customer: {
+            firstName: String(document.getElementById('editQuoteFirstName').value || '').trim(),
+            lastName: String(document.getElementById('editQuoteLastName').value || '').trim(),
+            company: String(document.getElementById('editQuoteCompany').value || '').trim(),
+            email: String(document.getElementById('editQuoteEmail').value || '').trim(),
+            phone: String(document.getElementById('editQuotePhone').value || '').trim()
+          },
+          notes: String(document.getElementById('editQuoteNotes').value || '').trim(),
+          status: document.getElementById('editQuoteStatus').value,
+          discount: Number(document.getElementById('editQuoteDiscount').value || 0),
+          taxRate: Number(document.getElementById('editQuoteTaxRate').value || 0),
+          items
+        };
+
+        try {
+          await requestWithFallback([
+            {
+              url: '/api/admin/quotes/' + encodeURIComponent(state.editingQuoteId),
+              method: 'PUT',
+              body: payload
+            },
+            {
+              url: '/api/quotes/' + encodeURIComponent(state.editingQuoteId),
+              method: 'PUT',
+              body: payload
+            }
+          ]);
+
+          showMessage('Preventivo aggiornato correttamente.', 'success');
+          closeQuoteEditor();
+          await loadQuotes();
+        } catch (error) {
+          if (error.status === 401) {
+            renderLogin();
+            return;
+          }
+
+          showMessage(error.message || 'Errore salvataggio preventivo.', 'error');
+        }
+      }
+
+      async function updateQuoteStatus(id) {
+        const select = document.querySelector('[data-quote-status="' + cssEscape(id) + '"]');
+        if (!select) return;
+
+        try {
+          await requestWithFallback([
+            {
+              url: '/api/admin/quotes/' + encodeURIComponent(id) + '/status',
+              method: 'PUT',
+              body: { status: select.value }
+            },
+            {
+              url: '/api/admin/quotes/' + encodeURIComponent(id) + '/status',
+              method: 'PATCH',
+              body: { status: select.value }
+            },
+            {
+              url: '/api/quotes/' + encodeURIComponent(id) + '/status',
+              method: 'PUT',
+              body: { status: select.value }
+            },
+            {
+              url: '/api/quotes/' + encodeURIComponent(id) + '/status',
+              method: 'PATCH',
+              body: { status: select.value }
+            }
+          ]);
+
+          showMessage('Stato aggiornato correttamente.', 'success');
+          await loadQuotes();
+        } catch (error) {
+          if (error.status === 401) {
+            renderLogin();
+            return;
+          }
+
+          showMessage(error.message || 'Errore aggiornamento stato.', 'error');
+        }
+      }
+
+      async function sendQuoteEmail(id) {
+        try {
+          await requestWithFallback([
+            {
+              url: '/api/admin/quotes/' + encodeURIComponent(id) + '/send-email',
+              method: 'POST'
+            },
+            {
+              url: '/api/admin/quotes/' + encodeURIComponent(id) + '/send',
+              method: 'POST'
+            },
+            {
+              url: '/api/admin/quotes/' + encodeURIComponent(id) + '/email',
+              method: 'POST'
+            },
+            {
+              url: '/api/quotes/' + encodeURIComponent(id) + '/send-email',
+              method: 'POST'
+            },
+            {
+              url: '/api/quotes/' + encodeURIComponent(id) + '/send',
+              method: 'POST'
+            },
+            {
+              url: '/api/quotes/' + encodeURIComponent(id) + '/email',
+              method: 'POST'
+            }
+          ]);
+
+          showMessage('Email inviata correttamente.', 'success');
+          await loadQuotes();
+        } catch (error) {
+          if (error.status === 401) {
+            renderLogin();
+            return;
+          }
+
+          showMessage(error.message || 'Errore invio email.', 'error');
+        }
+      }
+
+      async function deleteQuote(id) {
+        if (!window.confirm('Vuoi eliminare questo preventivo?')) return;
+
+        try {
+          await requestWithFallback([
+            { url: '/api/admin/quotes/' + encodeURIComponent(id), method: 'DELETE' },
+            { url: '/api/quotes/' + encodeURIComponent(id), method: 'DELETE' }
+          ]);
+
+          showMessage('Preventivo eliminato.', 'success');
+          closeQuoteEditor();
+          await loadQuotes();
+        } catch (error) {
+          if (error.status === 401) {
+            renderLogin();
+            return;
+          }
+
+          showMessage(error.message || 'Errore eliminazione preventivo.', 'error');
+        }
+      }
+
+      function getCustomerData(quote) {
+        const customer = quote.customer || {};
+        const firstName = customer.firstName || quote.firstName || quote.nome || '';
+        const lastName = customer.lastName || quote.lastName || quote.cognome || '';
+        const company = customer.company || quote.company || quote.azienda || '';
+        const email = customer.email || quote.email || '';
+        const phone = customer.phone || quote.phone || quote.telefono || '';
+
+        return {
+          firstName,
+          lastName,
+          company,
+          email,
+          phone,
+          fullName: `${firstName} ${lastName}`.trim()
+        };
+      }
+
+      function getItemQuantity(item) {
+        const quantity = Number(item.quantity ?? item.qty ?? item.qta ?? 1);
+        return Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+      }
+
+      function getItemUnitPrice(item) {
+        const direct = Number(item.unitPrice ?? item.price ?? item.prezzo ?? 0);
+        if (Number.isFinite(direct) && direct > 0) return direct;
+
+        const total = Number(item.total ?? item.lineTotal ?? item.subtotal ?? 0);
+        const quantity = getItemQuantity(item);
+        if (Number.isFinite(total) && total > 0 && quantity > 0) return total / quantity;
+
+        return 0;
+      }
+
+      function getItemTotal(item) {
+        const direct = Number(item.total ?? item.lineTotal ?? item.subtotal ?? 0);
+        if (Number.isFinite(direct) && direct > 0) return direct;
+        return getItemQuantity(item) * getItemUnitPrice(item);
+      }
+
+      function getQuoteTotal(quote) {
+        if (quote.total != null && quote.total !== '') return Number(quote.total) || 0;
+        if (!Array.isArray(quote.items)) return 0;
+        return quote.items.reduce((sum, item) => sum + getItemTotal(item), 0);
+      }
+
+      function normalizeStatus(status) {
+        const value = String(status || '').trim().toLowerCase();
+
+        if (value === 'accepted' || value === 'accettato') return 'accepted';
+        if (value === 'rejected' || value === 'rifiutato') return 'rejected';
+        if (value === 'sent' || value === 'inviato') return 'sent';
+        if (value === 'pending' || value === 'in attesa' || value === 'attesa' || value === 'in-attesa') return 'pending';
+
+        return 'pending';
+      }
+
+      function normalizeStatusForFilter(status) {
+        if (!status) return '';
+        return normalizeStatus(status);
+      }
+
+      function getStatusLabel(status) {
+        const value = normalizeStatus(status);
+
+        if (value === 'accepted') return 'Accettato';
+        if (value === 'rejected') return 'Rifiutato';
+        if (value === 'sent') return 'Inviato';
+
+        return 'In attesa';
+      }
+
+      function buildStatusOptions(selectedStatus) {
+        const current = normalizeStatus(selectedStatus);
+
+        return [
+          { value: 'pending', label: 'In attesa' },
+          { value: 'sent', label: 'Inviato' },
+          { value: 'accepted', label: 'Accettato' },
+          { value: 'rejected', label: 'Rifiutato' }
+        ].map((item) =>
+          `<option value="${item.value}" ${item.value === current ? 'selected' : ''}>${item.label}</option>`
+        ).join('');
+      }
+
+      async function apiRequest(url, options = {}) {
+        const config = {
+          method: options.method || 'GET',
+          credentials: 'same-origin',
+          headers: {}
+        };
+
+        if (options.body !== undefined) {
+          config.headers['Content-Type'] = 'application/json';
+          config.body = JSON.stringify(options.body);
+        }
+
+        const response = await fetch(url, config);
+        const text = await response.text();
+
+        let data = null;
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch {
+          data = text;
+        }
+
+        if (!response.ok) {
+          const err = new Error((data && data.error) || 'Errore richiesta');
+          err.status = response.status;
+          throw err;
+        }
+
+        return data;
+      }
+
+      async function requestWithFallback(requests) {
+        let lastError = null;
+
+        for (const req of requests) {
+          try {
+            return await apiRequest(req.url, {
+              method: req.method,
+              body: req.body
+            });
+          } catch (error) {
+            if (error.status === 401) {
+              throw error;
+            }
+            lastError = error;
+          }
+        }
+
+        throw lastError || new Error('Richiesta fallita');
+      }
+
+      function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+      }
+
+      function formatCurrency(value) {
+        const number = Number(value || 0);
+        return new Intl.NumberFormat('it-IT', {
+          style: 'currency',
+          currency: 'EUR'
+        }).format(number);
+      }
+
+      function formatDateTime(value) {
+        if (!value) return '-';
+        const date = new Date(value);
+        if (isNaN(date.getTime())) return '-';
+        return date.toLocaleString('it-IT');
+      }
+
+      function normalizeText(value) {
+        return String(value || '').toLowerCase().trim();
+      }
+
+      function showMessage(text, type = 'info') {
+        const area = document.getElementById('messageArea');
+        if (!area) return;
+
+        area.innerHTML = `<div class="message ${type}">${escapeHtml(text)}</div>`;
+
+        clearTimeout(showMessage._timer);
+        showMessage._timer = setTimeout(() => {
+          area.innerHTML = '';
+        }, 4000);
+      }
+
+      function escapeHtml(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value);
+      }
+
+      function cssEscape(value) {
+        if (window.CSS && typeof window.CSS.escape === 'function') {
+          return window.CSS.escape(String(value));
+        }
+        return String(value).replace(/"/g, '\\"');
+      }
+    })();
+  </script>
+</body>
+</html>

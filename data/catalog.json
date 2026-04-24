@@ -1,0 +1,38 @@
+[
+  {
+    "id": "prod_1774619663541_u59y4m",
+    "name": "Volante GT3 Porsche",
+    "description": "",
+    "price": 4399.99,
+    "sku": "",
+    "createdAt": "2026-03-27T13:54:23.541Z",
+    "updatedAt": "2026-04-01T13:12:22.613Z"
+  },
+  {
+    "id": "prod_1774619691798_b2vmvm",
+    "name": "Volante GT3 296",
+    "description": "",
+    "price": 4299.99,
+    "sku": "",
+    "createdAt": "2026-03-27T13:54:51.798Z",
+    "updatedAt": "2026-04-01T13:12:22.613Z"
+  },
+  {
+    "id": "prod_1774621097012_twxlbo",
+    "name": "Pedaliera P2000",
+    "description": "",
+    "price": 1800,
+    "sku": "",
+    "createdAt": "2026-03-27T14:18:17.012Z",
+    "updatedAt": "2026-04-01T13:12:22.613Z"
+  },
+  {
+    "id": "prod_1774873920117_thmbvs",
+    "name": "BMW M3 CS",
+    "description": "",
+    "price": 130000,
+    "sku": "",
+    "createdAt": "2026-03-30T12:32:00.117Z",
+    "updatedAt": "2026-04-01T13:12:22.613Z"
+  }
+]

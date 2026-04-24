@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <link rel="icon" href="/logo.png" type="image/png" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quote Engine</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg: #0a1220;
+      --panel: rgba(15, 24, 40, 0.97);
+      --panel-soft: rgba(255,255,255,0.035);
+      --line: rgba(255,255,255,0.08);
+      --line-strong: rgba(124,156,255,0.16);
+      --text: #eef4ff;
+      --text-soft: #9baac2;
+      --text-dim: #71829d;
+      --accent: #7c9cff;
+      --accent-2: #4fd1ff;
+      --success: #10b981;
+      --danger: #fb7185;
+      --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.24);
+      --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.18);
+      --radius-2xl: 26px;
+      --radius-xl: 22px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(124, 156, 255, 0.10) 0%, rgba(124, 156, 255, 0) 24%),
+        radial-gradient(circle at 88% 0%, rgba(79, 209, 255, 0.08) 0%, rgba(79, 209, 255, 0) 20%),
+        linear-gradient(180deg, #08111c 0%, #09131f 45%, #0a1220 100%);
+      background-attachment: fixed;
+    }
+
+    .app-shell {
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: 18px 20px 28px;
+    }
+
+    .glass,
+    .panel,
+    .summary-chip,
+    .summary-total-card,
+    .action-card,
+    .practice-mini {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .message-area {
+      position: static;
+      margin-bottom: 14px;
+    }
+
+    .message {
+      padding: 13px 15px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      line-height: 1.5;
+      box-shadow: var(--shadow-md);
+    }
+
+    .message.success {
+      color: #dbfff4;
+      background: rgba(16, 185, 129, 0.14);
+      border-color: rgba(16, 185, 129, 0.22);
+    }
+
+    .message.error {
+      color: #ffe6eb;
+      background: rgba(239, 68, 68, 0.14);
+      border-color: rgba(239, 68, 68, 0.22);
+    }
+
+    .message.info {
+      color: #eef4ff;
+      background: rgba(124, 156, 255, 0.14);
+      border-color: rgba(124, 156, 255, 0.22);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 16px 18px;
+      border-radius: var(--radius-2xl);
+    }
+
+    .brand-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      color: var(--text-soft);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 700;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+      box-shadow: 0 0 10px rgba(79, 209, 255, 0.6);
+    }
+    .brand-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.brand-logo {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  border-radius: 18px;
+  padding: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: var(--shadow-md);
+  flex-shrink: 0;
+}
+    .brand-wrap h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-wrap p {
+      margin: 0;
+      max-width: 840px;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill,
+    .top-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      box-shadow: var(--shadow-md);
+    }
+
+    .pill-success {
+      color: #dbfff4;
+      background: rgba(16, 185, 129, 0.14);
+      border-color: rgba(16, 185, 129, 0.22);
+    }
+
+    .top-link {
+      background:
+        linear-gradient(135deg, rgba(124, 156, 255, 0.20), rgba(79, 209, 255, 0.12)),
+        rgba(255,255,255,0.04);
+      border-color: rgba(124, 156, 255, 0.18);
+    }
+
+    .practice-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .practice-mini {
+      min-width: 0;
+      padding: 14px 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.035);
+    }
+
+    .practice-mini-label {
+      margin-bottom: 8px;
+      color: var(--text-dim);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 800;
+    }
+
+    .practice-mini-value {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .main-stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      border-radius: var(--radius-2xl);
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .panel-head {
+      padding: 20px 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: -0.03em;
+    }
+
+    .panel-subtitle {
+      margin: 8px 0 0 0;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .panel-body {
+      padding: 18px 20px 20px;
+      min-width: 0;
+    }
+
+    .field-grid-2,
+    .field-grid-3,
+    .catalog-tools,
+    .summary-grid,
+    .summary-bottom {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field-grid-2 { grid-template-columns: 1fr 1fr; }
+    .field-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .catalog-tools {
+      grid-template-columns: minmax(0, 1fr) 200px 200px;
+      align-items: end;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-dim);
+    }
+
+    .field input,
+    .field select,
+    .field textarea,
+    .table-input,
+    .table-textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 14px 15px;
+      font-size: 15px;
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      min-width: 0;
+    }
+
+    .field textarea,
+    .table-textarea {
+      min-height: 110px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus,
+    .table-input:focus,
+    .table-textarea:focus {
+      border-color: rgba(124, 156, 255, 0.32);
+      box-shadow: 0 0 0 4px rgba(124, 156, 255, 0.10);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .helper {
+      color: var(--text-soft);
+      font-size: 13px;
+      line-height: 1.55;
+      margin-top: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+      font-weight: 800;
+      font-size: 14px;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      transition: transform .08s ease, border-color .18s ease;
+      width: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,0.16);
+    }
+
+    .btn-primary {
+      color: #f7fbff;
+      border-color: rgba(124, 156, 255, 0.24);
+      background:
+        linear-gradient(135deg, rgba(124, 156, 255, 0.24), rgba(79, 209, 255, 0.12)),
+        rgba(255,255,255,0.05);
+    }
+
+    .btn-success {
+      color: #dbfff4;
+      border-color: rgba(16, 185, 129, 0.22);
+      background: rgba(16, 185, 129, 0.14);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .btn-danger {
+      color: #ffe6eb;
+      border-color: rgba(239, 68, 68, 0.22);
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .items-table-wrap {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .items-table {
+      width: 100%;
+      min-width: 960px;
+      border-collapse: separate;
+      border-spacing: 0 12px;
+    }
+
+    .items-table thead th {
+      padding: 0 10px 4px;
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      text-align: left;
+    }
+
+    .items-table thead th.right {
+      text-align: right;
+    }
+
+    .items-table tbody td {
+      padding: 10px;
+      vertical-align: top;
+      background: rgba(255,255,255,0.04);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .items-table tbody tr:nth-child(even) td {
+      background: rgba(255,255,255,0.03);
+    }
+
+    .items-table tbody td:first-child {
+      border-left: 1px solid rgba(255,255,255,0.06);
+      border-top-left-radius: 18px;
+      border-bottom-left-radius: 18px;
+    }
+
+    .items-table tbody td:last-child {
+      border-right: 1px solid rgba(255,255,255,0.06);
+      border-top-right-radius: 18px;
+      border-bottom-right-radius: 18px;
+    }
+
+    .cell-right { text-align: right; }
+
+    .row-total-box {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      font-weight: 800;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .empty {
+      margin-top: 6px;
+      padding: 24px;
+      text-align: center;
+      border: 1px dashed rgba(255,255,255,0.12);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      color: var(--text-soft);
+    }
+
+    .summary-section {
+      display: grid;
+      gap: 12px;
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .summary-chip {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.035);
+    }
+
+    .summary-chip-label {
+      color: var(--text-dim);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .summary-chip-value {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .summary-bottom {
+      grid-template-columns: 1.2fr 320px;
+      align-items: stretch;
+    }
+
+    .summary-total-card,
+    .action-card {
+      border-radius: 22px;
+      padding: 18px;
+      background: rgba(255,255,255,0.035);
+    }
+
+    /* BLOCCO TOTALE PREVENTIVO PREMIUM */
+    .summary-total-card {
+      position: relative;
+      overflow: hidden;
+      padding: 22px 20px;
+      border-radius: 22px;
+      border: 1px solid rgba(124, 156, 255, 0.22);
+      background:
+        linear-gradient(135deg, rgba(124, 156, 255, 0.18) 0%, rgba(79, 209, 255, 0.10) 35%, rgba(16, 185, 129, 0.08) 100%),
+        rgba(255,255,255,0.06);
+      box-shadow:
+        0 18px 36px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255,255,255,0.07);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .summary-total-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(79, 209, 255, 0.95), rgba(124, 156, 255, 0.6), rgba(16, 185, 129, 0.5), transparent 90%);
+    }
+
+    .summary-total-card::after {
+      content: "";
+      position: absolute;
+      top: -32px;
+      right: -28px;
+      width: 120px;
+      height: 120px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(79, 209, 255, 0.22) 0%, rgba(124, 156, 255, 0.10) 38%, rgba(0,0,0,0) 72%);
+      pointer-events: none;
+    }
+
+    .summary-total-label {
+      position: relative;
+      z-index: 1;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: rgba(238, 244, 255, 0.78);
+      margin-bottom: 10px;
+    }
+
+    .summary-total-value {
+      position: relative;
+      z-index: 1;
+      font-size: 54px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.05em;
+      color: #f8fbff;
+      text-shadow: 0 0 18px rgba(79, 209, 255, 0.10);
+    }
+
+   #grandTotal {
+  display: inline-block;
+  color: #f8fbff;
+  text-shadow:
+    0 0 12px rgba(79, 209, 255, 0.22),
+    0 0 26px rgba(124, 156, 255, 0.12);
+}
+    .summary-note {
+      position: relative;
+      z-index: 1;
+      margin-top: 14px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: rgba(238, 244, 255, 0.82);
+    }
+
+    .action-card {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    @media (max-width: 1180px) {
+      .summary-bottom {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .field-grid-2,
+      .field-grid-3,
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .catalog-tools {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .practice-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        flex-direction: column;
+      }
+
+      .brand-wrap h1 {
+        font-size: 34px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app-shell {
+        padding: 14px 12px 22px;
+      }
+
+      .topbar,
+      .panel-head,
+      .panel-body,
+      .summary-chip,
+      .summary-total-card,
+      .action-card,
+      .practice-mini {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .summary-total-value {
+        font-size: 34px;
+      }
+    }
+
+    .field select,
+    .search-input,
+    .editor-select {
+      color: #eef4ff;
+    }
+
+    .field select option,
+    .search-input option,
+    .editor-select option {
+      color: #111827;
+      background: #ffffff;
+    }
+
+    .field select optgroup,
+    .search-input optgroup,
+    .editor-select optgroup {
+      color: #111827;
+      background: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="messageArea" class="message-area"></div>
+
+    <div class="topbar glass">
+    <div class="brand-area">
+  <img src="/logo.png" alt="Quote Engine Logo" class="brand-logo" />
+
+  <div class="brand-wrap">
+    <span class="eyebrow">Quote Engine • Preventivi intelligenti</span>
+    <h1>Quote Engine</h1>
+    <p>Creazione preventivi con catalogo prodotti, PDF professionale e gestione amministrativa in un’interfaccia più pulita, moderna e credibile.</p>
+  </div>
+</div>
+
+      <div class="topbar-actions">
+        <span id="adminStatus"></span>
+        <a class="top-link" href="/admin">Apri gestionale admin</a>
+      </div>
+    </div>
+
+    <section class="practice-strip">
+      <div class="practice-mini">
+        <div class="practice-mini-label">Numero pratica</div>
+        <div id="quotePreviewNumber" class="practice-mini-value">Automatico</div>
+      </div>
+
+      <div class="practice-mini">
+        <div class="practice-mini-label">Data</div>
+        <div id="quotePreviewDate" class="practice-mini-value">--/--/----</div>
+      </div>
+
+      <div class="practice-mini">
+        <div class="practice-mini-label">Stato iniziale</div>
+        <div class="practice-mini-value">In attesa</div>
+      </div>
+    </section>
+
+    <main class="main-stack">
+      <form id="quoteForm">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Dati cliente</h2>
+              <p class="panel-subtitle">Informazioni anagrafiche e contatti del cliente.</p>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div class="field-grid-2">
+              <div class="field">
+                <label for="firstName">Nome</label>
+                <input id="firstName" type="text" placeholder="Nome cliente" />
+              </div>
+
+              <div class="field">
+                <label for="lastName">Cognome</label>
+                <input id="lastName" type="text" placeholder="Cognome cliente" />
+              </div>
+            </div>
+
+            <div class="field-grid-3" style="margin-top:12px;">
+              <div class="field">
+                <label for="company">Azienda</label>
+                <input id="company" type="text" placeholder="Ragione sociale o azienda" />
+              </div>
+
+              <div class="field">
+                <label for="email">Email</label>
+                <input id="email" type="email" placeholder="cliente@email.it" />
+              </div>
+
+              <div class="field">
+                <label for="phone">Telefono</label>
+                <input id="phone" type="text" placeholder="Numero di telefono" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Aggiunta prodotti</h2>
+              <p class="panel-subtitle">Seleziona un prodotto dal catalogo oppure crea una riga manuale.</p>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div class="catalog-tools">
+              <div class="field">
+                <label for="catalogSelect">Catalogo prodotti</label>
+                <select id="catalogSelect">
+                  <option value="">Seleziona prodotto</option>
+                </select>
+              </div>
+
+              <button id="addCatalogBtn" class="btn btn-primary" type="button">Aggiungi prodotto</button>
+              <button id="addManualBtn" class="btn btn-secondary" type="button">Aggiungi riga manuale</button>
+            </div>
+
+            <div id="catalogInfo" class="helper"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Righe preventivo</h2>
+              <p class="panel-subtitle">Gestisci quantità, prezzi e descrizioni della proposta commerciale.</p>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div id="itemsContainer"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title">Note finali</h2>
+              <p class="panel-subtitle">Condizioni, dettagli extra o informazioni da riportare nel preventivo.</p>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div class="field">
+              <label for="notes">Note</label>
+              <textarea id="notes" placeholder="Inserisci eventuali note, condizioni o dettagli aggiuntivi..."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="summary-section">
+          <div class="summary-grid">
+            <div class="summary-chip">
+              <div class="summary-chip-label">Righe inserite</div>
+              <div id="summaryRows" class="summary-chip-value">0</div>
+            </div>
+
+            <div class="summary-chip">
+              <div class="summary-chip-label">Quantità totale</div>
+              <div id="summaryQty" class="summary-chip-value">0</div>
+            </div>
+
+            <div class="summary-chip">
+              <div class="summary-chip-label">Subtotale</div>
+              <div id="summarySubtotal" class="summary-chip-value">€ 0,00</div>
+            </div>
+          </div>
+
+          <div class="summary-bottom">
+            <div class="summary-total-card">
+              <div class="summary-total-label">Totale preventivo</div>
+              <div id="grandTotal" class="summary-total-value">€ 0,00</div>
+              <div class="summary-note">
+                Il totale mostrato qui è il riepilogo delle righe inserite nel preventivo.
+              </div>
+            </div>
+
+            <div class="action-card">
+              <button id="saveQuoteBtn" class="btn btn-success" type="submit" form="quoteForm">Salva preventivo</button>
+              <button id="resetBtn" class="btn btn-secondary" type="button">Reset modulo</button>
+            </div>
+          </div>
+        </section>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const state = { products: [] };
+
+      const messageArea = document.getElementById('messageArea');
+      const adminStatus = document.getElementById('adminStatus');
+      const quoteForm = document.getElementById('quoteForm');
+      const catalogSelect = document.getElementById('catalogSelect');
+      const addCatalogBtn = document.getElementById('addCatalogBtn');
+      const addManualBtn = document.getElementById('addManualBtn');
+      const itemsContainer = document.getElementById('itemsContainer');
+      const grandTotal = document.getElementById('grandTotal');
+      const resetBtn = document.getElementById('resetBtn');
+      const catalogInfo = document.getElementById('catalogInfo');
+      const summaryRows = document.getElementById('summaryRows');
+      const summaryQty = document.getElementById('summaryQty');
+      const summarySubtotal = document.getElementById('summarySubtotal');
+      const quotePreviewDate = document.getElementById('quotePreviewDate');
+      const quotePreviewNumber = document.getElementById('quotePreviewNumber');
+
+      document.addEventListener('DOMContentLoaded', init);
+
+      async function init() {
+        setPreviewDate();
+        quotePreviewNumber.textContent = 'Automatico';
+
+        await checkAdmin();
+        await loadCatalog();
+
+        renderItemsTable();
+        addItemRow();
+
+        addCatalogBtn.addEventListener('click', addSelectedCatalogItem);
+        addManualBtn.addEventListener('click', () => {
+          addItemRow();
+          updateTotals();
+        });
+
+        resetBtn.addEventListener('click', resetForm);
+
+        quoteForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          await saveQuote();
+        });
+
+        itemsContainer.addEventListener('input', (e) => {
+          if (
+            e.target.classList.contains('item-name') ||
+            e.target.classList.contains('item-description') ||
+            e.target.classList.contains('item-qty') ||
+            e.target.classList.contains('item-price')
+          ) {
+            updateTotals();
+          }
+        });
+
+        itemsContainer.addEventListener('click', (e) => {
+          const btn = e.target.closest('[data-remove-row]');
+          if (!btn) return;
+
+          const row = btn.closest('tr');
+          if (row) row.remove();
+
+          if (!document.querySelector('.quote-item-row')) {
+            addItemRow();
+          }
+
+          toggleEmptyState();
+          updateTotals();
+        });
+
+        updateTotals();
+      }
+
+      function setPreviewDate() {
+        quotePreviewDate.textContent = new Date().toLocaleString('it-IT', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      async function checkAdmin() {
+        try {
+          const data = await api('/api/admin/check');
+          if (data && (data.isAdmin || data.authenticated)) {
+            adminStatus.innerHTML = '<span class="pill pill-success">Admin connesso</span>';
+          } else {
+            adminStatus.innerHTML = '';
+          }
+        } catch {
+          adminStatus.innerHTML = '';
+        }
+      }
+
+      async function loadCatalog() {
+        try {
+          const products = await api('/api/catalog');
+          state.products = Array.isArray(products) ? products : [];
+          renderCatalogOptions();
+
+          if (state.products.length) {
+            catalogInfo.textContent = 'Catalogo caricato correttamente.';
+          } else {
+            catalogInfo.textContent = 'Catalogo vuoto. Aggiungi prodotti dal gestionale admin.';
+          }
+        } catch (error) {
+          state.products = [];
+          renderCatalogOptions();
+          catalogInfo.textContent = 'Errore caricamento catalogo.';
+          showMessage(error.message || 'Errore caricamento catalogo', 'error');
+        }
+      }
+
+      function renderCatalogOptions() {
+        catalogSelect.innerHTML = '<option value="">Seleziona prodotto</option>';
+
+        if (!state.products.length) return;
+
+        catalogSelect.innerHTML += state.products.map((product) => {
+          return `
+            <option value="${escapeAttr(product.id)}">
+              ${escapeHtml(product.name || '')} - ${formatCurrency(product.price || 0)}
+            </option>
+          `;
+        }).join('');
+      }
+
+      function renderItemsTable() {
+        itemsContainer.innerHTML = `
+          <div class="items-table-wrap">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%;">Prodotto</th>
+                  <th style="width: 28%;">Descrizione</th>
+                  <th class="right" style="width: 10%;">Q.tà</th>
+                  <th class="right" style="width: 13%;">Prezzo unit.</th>
+                  <th class="right" style="width: 13%;">Totale riga</th>
+                  <th class="right" style="width: 8%;">Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="itemsTableBody"></tbody>
+            </table>
+          </div>
+
+          <div id="itemsEmpty" class="empty" style="display:none;">
+            Nessuna riga inserita. Aggiungi un prodotto dal catalogo oppure crea una riga manuale.
+          </div>
+        `;
+      }
+
+      function addSelectedCatalogItem() {
+        const productId = String(catalogSelect.value || '').trim();
+        if (!productId) return;
+
+        const product = state.products.find((p) => String(p.id) === productId);
+        if (!product) return;
+
+        addItemRow({
+          name: product.name || '',
+          description: product.description || '',
+          quantity: 1,
+          price: Number(product.price || 0)
+        });
+
+        catalogSelect.value = '';
+        updateTotals();
+      }
+
+      function addItemRow(item) {
+        const data = item || { name: '', description: '', quantity: 1, price: 0 };
+        const tbody = document.getElementById('itemsTableBody');
+        if (!tbody) return;
+
+        const tr = document.createElement('tr');
+        tr.className = 'quote-item-row';
+        tr.innerHTML = `
+          <td>
+            <input class="table-input item-name" type="text" value="${escapeAttr(data.name || '')}" placeholder="Nome prodotto o servizio" />
+          </td>
+          <td>
+            <textarea class="table-textarea item-description" placeholder="Descrizione opzionale">${escapeHtml(data.description || '')}</textarea>
+          </td>
+          <td class="cell-right">
+            <input class="table-input item-qty" type="number" min="1" step="1" value="${escapeAttr(String(data.quantity || 1))}" />
+          </td>
+          <td class="cell-right">
+            <input class="table-input item-price" type="number" min="0" step="0.01" value="${escapeAttr(String(data.price || 0))}" />
+          </td>
+          <td class="cell-right">
+            <div class="row-total-box">€ 0,00</div>
+          </td>
+          <td class="cell-right">
+            <button type="button" class="btn btn-danger" data-remove-row>Rimuovi</button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+        toggleEmptyState();
+      }
+
+      function toggleEmptyState() {
+        const rows = document.querySelectorAll('.quote-item-row');
+        const empty = document.getElementById('itemsEmpty');
+        if (!empty) return;
+        empty.style.display = rows.length ? 'none' : 'block';
+      }
+
+      function collectItems() {
+        return Array.from(document.querySelectorAll('.quote-item-row'))
+          .map((row) => {
+            const name = String(row.querySelector('.item-name')?.value || '').trim();
+            const description = String(row.querySelector('.item-description')?.value || '').trim();
+            const quantity = Number(row.querySelector('.item-qty')?.value || 1);
+            const price = Number(row.querySelector('.item-price')?.value || 0);
+
+            return {
+              name,
+              description,
+              quantity: quantity > 0 ? quantity : 1,
+              price: Number.isFinite(price) ? price : 0
+            };
+          })
+          .filter((item) => item.name);
+      }
+
+      function updateTotals() {
+        let total = 0;
+        let totalQty = 0;
+
+        Array.from(document.querySelectorAll('.quote-item-row')).forEach((row) => {
+          const qty = Number(row.querySelector('.item-qty')?.value || 1);
+          const price = Number(row.querySelector('.item-price')?.value || 0);
+          const safeQty = Number.isFinite(qty) && qty > 0 ? qty : 1;
+          const safePrice = Number.isFinite(price) ? price : 0;
+          const rowTotal = safeQty * safePrice;
+
+          const totalBox = row.querySelector('.row-total-box');
+          if (totalBox) totalBox.textContent = formatCurrency(rowTotal);
+
+          total += rowTotal;
+          totalQty += safeQty;
+        });
+
+        const validRows = collectItems().length;
+
+        grandTotal.textContent = formatCurrency(total);
+        summarySubtotal.textContent = formatCurrency(total);
+        summaryRows.textContent = String(validRows);
+        summaryQty.textContent = String(totalQty);
+      }
+
+      async function saveQuote() {
+        const payload = {
+          firstName: getValue('firstName'),
+          lastName: getValue('lastName'),
+          company: getValue('company'),
+          email: getValue('email'),
+          phone: getValue('phone'),
+          notes: getValue('notes'),
+          status: 'pending',
+          sendEmail: false,
+          items: collectItems()
+        };
+
+        if (!payload.firstName && !payload.lastName && !payload.company) {
+          showMessage('Inserisci almeno nome/cognome oppure azienda.', 'error');
+          return;
+        }
+
+        if (!payload.items.length) {
+          showMessage('Inserisci almeno un prodotto nel preventivo.', 'error');
+          return;
+        }
+
+        try {
+          const result = await api('/api/quotes', {
+            method: 'POST',
+            body: payload
+          });
+
+          const quoteNumber = result?.quote?.number || result?.number || 'Preventivo creato';
+          showMessage('Preventivo creato correttamente: ' + quoteNumber, 'success');
+          resetForm();
+        } catch (error) {
+          if (error.status === 401) {
+            showMessage('Per creare preventivi devi essere loggato come admin.', 'error');
+            return;
+          }
+          showMessage(error.message || 'Errore salvataggio preventivo', 'error');
+        }
+      }
+
+      function resetForm() {
+        quoteForm.reset();
+        renderItemsTable();
+        addItemRow();
+        toggleEmptyState();
+        updateTotals();
+        setPreviewDate();
+        quotePreviewNumber.textContent = 'Automatico';
+      }
+
+      async function api(url, options = {}) {
+        const config = {
+          method: options.method || 'GET',
+          credentials: 'same-origin',
+          headers: {}
+        };
+
+        if (options.body !== undefined) {
+          config.headers['Content-Type'] = 'application/json';
+          config.body = JSON.stringify(options.body);
+        }
+
+        const response = await fetch(url, config);
+        const text = await response.text();
+
+        let data = null;
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch {
+          data = text;
+        }
+
+        if (!response.ok) {
+          const error = new Error((data && data.error) || 'Errore richiesta');
+          error.status = response.status;
+          throw error;
+        }
+
+        return data;
+      }
+
+      function getValue(id) {
+        const el = document.getElementById(id);
+        return el ? String(el.value || '').trim() : '';
+      }
+
+      function showMessage(text, type = 'info') {
+        messageArea.innerHTML = '<div class="message ' + type + '">' + escapeHtml(text) + '</div>';
+
+        clearTimeout(showMessage._timer);
+        showMessage._timer = setTimeout(() => {
+          messageArea.innerHTML = '';
+        }, 4000);
+      }
+
+      function formatCurrency(value) {
+        const number = Number(value || 0);
+        return new Intl.NumberFormat('it-IT', {
+          style: 'currency',
+          currency: 'EUR'
+        }).format(number);
+      }
+
+      function escapeHtml(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function escapeAttr(value) {
+        return escapeHtml(value);
+      }
+    })();
+  </script>
+</body>
+</html>
