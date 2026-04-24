@@ -24,7 +24,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'cambia-questo-session-secr
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 const COMPANY_NAME = process.env.COMPANY_NAME || 'Quote Engine';
-const COMPANY_EMAIL = process.env.COMPANY_EMAIL || process.env.GMAIL_USER || 'noreply@example.com';
+const COMPANY_EMAIL = process.env.COMPANY_EMAIL || 'noreply@example.com';
 const COMPANY_PHONE = process.env.COMPANY_PHONE || '';
 const COMPANY_ADDRESS = process.env.COMPANY_ADDRESS || '';
 const EMAIL_ENABLED = String(process.env.EMAIL_ENABLED || 'true').toLowerCase() !== 'false';
